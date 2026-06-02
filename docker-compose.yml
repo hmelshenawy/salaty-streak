@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./salaty-streak-backend
+      dockerfile: Dockerfile
+    container_name: salaty-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3100
+    networks:
+      - n8n_default
+
+  frontend:
+    build:
+      context: ./salaty-streak-frontend
+      dockerfile: Dockerfile
+    container_name: salaty-web
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=https://salaty.hmelshenawy.com
+      - BACKEND_URL=http://salaty-api:3100
+      - NODE_ENV=production
+      - PORT=3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=n8n_default"
+      - "traefik.http.routers.salaty-web.rule=Host(`salaty.hmelshenawy.com`)"
+      - "traefik.http.routers.salaty-web.entrypoints=websecure"
+      - "traefik.http.routers.salaty-web.tls=true"
+      - "traefik.http.routers.salaty-web.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.salaty-web.loadbalancer.server.port=3000"
+    networks:
+      - n8n_default
+
+networks:
+  n8n_default:
+    external: true
